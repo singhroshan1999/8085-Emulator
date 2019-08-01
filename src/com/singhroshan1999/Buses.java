@@ -13,7 +13,9 @@ class Buses {
     static void D0_7(byte low){
         Buses._ADDBUSL = low;
     }
-
+    static byte D0_7(){
+        return Buses._ADDBUSL;
+    }
     static byte A8_15(){
         return _ADDBUSH;
     }

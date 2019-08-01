@@ -1,5 +1,6 @@
 package com.singhroshan1999;
 import java.util.*;
+import com.singhroshan1999.Buses;
 // TODO : instruction set
 class InstructionSet {
     private static Map<Byte,Runnable> _insSet= new HashMap<>();
@@ -12,12 +13,26 @@ class InstructionSet {
 //        return (byte) ((b & 0B11000000)>>3);
 //    }
     static {
+
         /* 1 byte instructions */
-        _insSet.put((byte)1,()->System.out.println(""));
+        _insSet.put((byte)0B01000000,()->{
+            byte b = Buses.D0_7();
+            byte s = (byte) (0b111 & b);
+            byte d = (byte) ((0b111000&b) >>3);
 
-        /* 2 byte */
 
-        /* 3 byte */
+
+
+        });
+        _insSet.put((byte)0B01000000,()->{
+
+        });
+        _insSet.put((byte)0B10000000,()->{
+
+        });
+        _insSet.put((byte)0B11000000,()->{
+
+        });
     }
 
     static {
@@ -37,7 +52,7 @@ class InstructionSet {
         _decode.put("POP",(byte)0B11000001);
         _decode.put("XTHL",(byte)0B11100011);
         _decode.put("SPHL",(byte)0B11111001);
-        _decode.put("LXI",(byte)0B01000000); // ***
+        _decode.put("LXI",(byte)0B0); // ***
         _decode.put("INX",(byte)0B00110011);
         _decode.put("DCX",(byte)0B00111011);
         /* JUMP */
@@ -77,7 +92,47 @@ class InstructionSet {
         _decode.put("IN", (byte)0B11011011);
         _decode.put("OUT",(byte)0B11010011);
         /* INCREMENT / DECREMENT */
-
+        _decode.put("INR",(byte)0B00000100);
+        _decode.put("DCR",(byte)0B00000101);
+        _decode.put("INX",(byte)0B0); // ****
+        _decode.put("DCX",(byte)0B0); // ****
+        /* ADD */
+        _decode.put("ADD",(byte)0B10000000);
+        _decode.put("ADC",(byte)0B10001000);
+        _decode.put("ADI",(byte)0B11000110);
+        _decode.put("ACI",(byte)0B11001110);
+        _decode.put("DAD",(byte)0B00000001);
+        /* SUB */
+        _decode.put("SUB",(byte)0B10010000);
+        _decode.put("SBB",(byte)0B10011000);
+        _decode.put("SUI",(byte)0B11010110);
+        _decode.put("SBI",(byte)0B11011110);
+        /* LOGICAL */
+        _decode.put("ANA",(byte)0B10100000);
+        _decode.put("XRA",(byte)0B10101000);
+        _decode.put("ORA",(byte)0B10110000);
+        _decode.put("CMP",(byte)0B10111000);
+        _decode.put("ANI",(byte)0B11100110);
+        _decode.put("XRI",(byte)0B11101110);
+        _decode.put("ORI",(byte)0B11110110);
+        _decode.put("CPI",(byte)0B11111110);
+        _decode.put("RLC",(byte)0B00000111);
+        _decode.put("RRC",(byte)0B00001111);
+        _decode.put("RAL",(byte)0B00010111);
+        _decode.put("RAR",(byte)0B00011111);
+        /* SPECIALS */
+        _decode.put("CMA",(byte)0B00100111);
+        _decode.put("STC",(byte)0B00101111);
+        _decode.put("CMC",(byte)0B00110111);
+        _decode.put("DAA",(byte)0B00111111);
+        /* CONTROL */
+        _decode.put("EI", (byte)0B11111011);
+        _decode.put("DI", (byte)0B11110011);
+        _decode.put("NOP",(byte)0B00000000);
+        _decode.put("HLT",(byte)0B01110110);
+        /* NEW 8085AH INSTRUCTIONS */
+        _decode.put("RIM",(byte)0B00100000);
+        _decode.put("SIM",(byte)0B00110000);
     }
 
 }

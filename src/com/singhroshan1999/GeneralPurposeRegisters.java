@@ -1,5 +1,7 @@
 package com.singhroshan1999;
 
+import java.util.Map;
+
 class GeneralPurposeRegisters {
     private static byte _B,_C,_D,_E,_H,_L;
     private static byte _W,_Z;
