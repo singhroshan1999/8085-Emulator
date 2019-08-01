@@ -22,6 +22,16 @@ class Buses {
         return (ALE)?_ADDBUSL:0b00000000;
     }
 
+    static void DATABUS(byte b){
+        Buses.__DATABUS = b;
+    }
+    static byte DATABUS(){
+        return Buses.__DATABUS;
+    }
+    static void transDtoAB(){
+        Buses._ADDBUSL = Buses.__DATABUS;
+    }
+
 
 
 
