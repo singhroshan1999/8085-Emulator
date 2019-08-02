@@ -1,11 +1,21 @@
 package com.singhroshan1999;
 
+import java.util.HashMap;
 import java.util.Map;
 
 class GeneralPurposeRegisters {
+    private static Map<Byte,Byte> _register= new HashMap<>();
     private static byte _B,_C,_D,_E,_H,_L;
     private static byte _W,_Z;
-
+    static {
+        _register.put((byte)0B000,(byte)0B000); //B
+        _register.put((byte)0B001,(byte)0B000); //C
+        _register.put((byte)0B010,(byte)0B000); //D
+        _register.put((byte)0B011,(byte)0B000); //E
+        _register.put((byte)0B100,(byte)0B000); //H
+        _register.put((byte)0B101,(byte)0B000); //L
+        _register.put((byte)0B111,(byte)0B000); //A
+    }
     /** setter */
     static void B(byte b){
         GeneralPurposeRegisters._B = b;
@@ -83,6 +93,13 @@ class GeneralPurposeRegisters {
     }
     static short HL(){
         return (short) (GeneralPurposeRegisters._H<<8 | GeneralPurposeRegisters._L);
+    }
+
+    static void register(byte address,byte value){
+        GeneralPurposeRegisters._register.put(address,value);
+    }
+    static byte register(byte address){
+        return GeneralPurposeRegisters._register.get(address);
     }
 
 
