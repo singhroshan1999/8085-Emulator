@@ -96,22 +96,123 @@ class InstructionSet {
         GeneralPurposeRegisters.register(_L,GeneralPurposeRegisters.register(_E));
         GeneralPurposeRegisters.register(_E,t);
     });
-    _insSet.put((byte)0B11000000,()->{
+    // TODO : STACK OPS
+    _insSet.put((byte)0B11000000,()->{ //JMP
+        SpecialPurposeRegisters.PC(Memory.readPC());
+    });
+    _insSet.put((byte)0B11000000,()->{ // JC
+        if(SpecialPurposeRegisters.CY()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // JNC
+        if(!SpecialPurposeRegisters.CY()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // JZ
+        if(SpecialPurposeRegisters.Z()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // JNZ
+        if(!SpecialPurposeRegisters.Z()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // JP
+        if(SpecialPurposeRegisters.S()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ //JM
+        if(!SpecialPurposeRegisters.S()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // JPE
+        if(SpecialPurposeRegisters.P()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // JPO
+        if(!SpecialPurposeRegisters.P()){
+            SpecialPurposeRegisters.PC(Memory.readPC());
+        }else{
+            Memory.readPC();
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // PCHL
+            SpecialPurposeRegisters.PC((short)(GeneralPurposeRegisters.register(_H)<<8|GeneralPurposeRegisters.register(_L)));
+    });
+    // TODO : CALL
+    // TODO : RETURN
+    // TODO : RST IN/OUT
+    // TODO : SPECIALS/CONTROL/NEW
+
+    _insSet.put((byte)0B11000000,()->{ // INR
+        byte r = (byte) ((SpecialPurposeRegisters.IR() & 0B00111000) >>3);
+        if(r == 0b110){
+            short add = Memory.readPC();
+            //88888888888888
+            Memory.write(add, (byte) (Memory.read(add)+1));
+        }else{
+            int sum = (GeneralPurposeRegisters.register(r)+1);
+            SpecialPurposeRegisters.CY(sum>>8 > 0b0);
+            GeneralPurposeRegisters.register(r, (byte) sum);
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // DCR
+        byte r = (byte) ((SpecialPurposeRegisters.IR() & 0B00111000) >>3);
+        if(r == 0b110){
+            short add = Memory.readPC();
+            Memory.write(add, (byte) (Memory.read(add)-1));
+        }else{
+            GeneralPurposeRegisters.register(r, (byte) (GeneralPurposeRegisters.register(r)-1));
+        }
+    });
+    _insSet.put((byte)0B11000000,()->{ // INX
+        byte r = (byte) ((SpecialPurposeRegisters.IR() &  0B00110000) >> 4 );
+        if(r == 0b00){
+            short x =(short) (GeneralPurposeRegisters.BC()+1);
+            GeneralPurposeRegisters.BC((byte) (x>>8),(byte) (x&0b0000000011111111));
+        } else if(r == 0b01){
+            short x =(short) (GeneralPurposeRegisters.DE()+1);
+            GeneralPurposeRegisters.DE((byte) (x>>8),(byte) (x&0b0000000011111111));
+        }else if(r == 0b10){
+            short x =(short) (GeneralPurposeRegisters.HL()+1);
+            GeneralPurposeRegisters.HL((byte) (x>>8),(byte) (x&0b0000000011111111));
+        }
 
     });
-    _insSet.put((byte)0B11000000,()->{
-
+    _insSet.put((byte)0B11000000,()->{ // DCX
+        byte r = (byte) ((SpecialPurposeRegisters.IR() &  0B00110000) >> 4 );
+        if(r == 0b00){
+            short x =(short) (GeneralPurposeRegisters.BC()-1);
+            GeneralPurposeRegisters.BC((byte) (x>>8),(byte) (x&0b0000000011111111));
+        } else if(r == 0b01){
+            short x =(short) (GeneralPurposeRegisters.DE()-1);
+            GeneralPurposeRegisters.DE((byte) (x>>8),(byte) (x&0b0000000011111111));
+        }else if(r == 0b10){
+            short x =(short) (GeneralPurposeRegisters.HL()-1);
+            GeneralPurposeRegisters.HL((byte) (x>>8),(byte) (x&0b0000000011111111));
+        }
     });
-    _insSet.put((byte)0B11000000,()->{
-
-    });
-    _insSet.put((byte)0B11000000,()->{
-
-    });
-    _insSet.put((byte)0B11000000,()->{
-
-    });
-    _insSet.put((byte)0B11000000,()->{
+    _insSet.put((byte)0B11000000,()->{ //
 
     });
     _insSet.put((byte)0B11000000,()->{
