@@ -9,6 +9,7 @@ public class Memory {
     static void write(short address,byte data){
         memory[(int)address] = data;
     }
+    static void writeInt(int address,int data){ Memory.write((short) address,(byte) data);}
     static byte readPC(){
         return memory[(int)SpecialPurposeRegisters.PC()];
     }
