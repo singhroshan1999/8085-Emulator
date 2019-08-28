@@ -14,10 +14,24 @@ public class Memory {
         return memory[(int)SpecialPurposeRegisters.PC()];
     }
     static byte readHL(){
-        return memory[(int)(GeneralPurposeRegisters.register((byte) 0b100)<<8 | GeneralPurposeRegisters.register((byte) 0b101))];
+        return memory[(int)((GeneralPurposeRegisters.register((byte) 0b100)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b101))&0xff];
     }
     static void writeHL(byte data){
-        Memory.write((short) (GeneralPurposeRegisters.register((byte) 0b100)<<8 | GeneralPurposeRegisters.register((byte) 0b101)),data);
+        Memory.write((short) ((short) ((GeneralPurposeRegisters.register((byte) 0b100)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b101))&0xff),data);
+    }
+    static void writeSP(short data){
+        SpecialPurposeRegisters.decSP();
+        Memory.write(SpecialPurposeRegisters.SP(),(byte) (data & 0b0000000011111111));
+        SpecialPurposeRegisters.decSP();
+        Memory.write(SpecialPurposeRegisters.SP(),(byte) (data >> 8));
+    }
+    static short readSP(){
+        short i;
+        i = (short) (Memory.read(SpecialPurposeRegisters.SP())<<8);
+        SpecialPurposeRegisters.incSP();
+        i = (short) (i | Memory.read(SpecialPurposeRegisters.SP()));
+        SpecialPurposeRegisters.incSP();
+        return i;
     }
 
 }

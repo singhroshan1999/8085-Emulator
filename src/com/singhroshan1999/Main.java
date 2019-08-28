@@ -1,35 +1,52 @@
 package com.singhroshan1999;
 
-import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
-import com.singhroshan1999.*;
 
 public class Main {
 
-    public static void main(String[] args)  {
-//        System.out.println(0XC6);
-//        Memory.writeInt(2000,0X3E);
-//        Memory.writeInt(2001,195);
-//        Memory.writeInt(2002,0XC6);
-//        Memory.writeInt(2003,13);
-//        Memory.writeInt(2004,0X77);
-//        Memory.writeInt(2005,0X76);
+    public static void main(String[] args) throws IOException {
 
-//        InstructionSet.setPC((short) 2000);
+//        MnemonicParser.compile("MVI A,5");
+//        MnemonicParser.compile("MVI B,15");
+//        MnemonicParser.compile("ADD B");
+//        MnemonicParser.compile("STA 100");
+//        MnemonicParser.compile("HLT");
+//        InstructionSet.setPC((short)0);
 //        InstructionSet.executeIR();
-//        System.out.println((Memory.read((short) 0))&0xff);
-        MnemonicParser.compile("MVI A,5");
-        MnemonicParser.compile("MVI B,15");
-        MnemonicParser.compile("ADD B");
-        MnemonicParser.compile("STA 100");
-        MnemonicParser.compile("HLT");
-        InstructionSet.setPC((short)0);
-        InstructionSet.executeIR();
-        for (int i = 10; i < 9; i++) {
-            System.out.println(Memory.read((short)i));
+//        for (int i = 10; i < 9; i++) {
+//            System.out.println(Memory.read((short)i));
+//        }
+//        System.out.println(Memory.read((short) 100));
+//        Scanner s = new Scanner(System.in);
+        FileReader f = new FileReader("in.asm");
+        BufferedReader s = new BufferedReader(f);
+        short stptr = 0;
+        String str = new String();
+        InstructionSet.setPC(stptr);
+        while(!str.equals("q")){
+//            System.out.print("::");
+            str = s.readLine();
+            if(str.equals("q")) break;
+            if(str.toUpperCase().equals("%EXECUTE")){
+                InstructionSet.executeIR();
+                System.out.println((GeneralPurposeRegisters.register((byte) 0b000)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b001)&0xff);
+                System.out.println(GeneralPurposeRegisters.register((byte) 0b001));
+                continue;
+            }else if(str.startsWith("%SETMEMORY")){
+                String[] arr = str.split(" ");
+                MnemonicParser.setStart(Short.parseShort(arr[1]));
+                stptr = Short.parseShort(arr[1]);
+                InstructionSet.setPC(stptr);
+            }
+
+            MnemonicParser.compile(str);
+//            System.out.print("::");
+//            str = s.nextLine();
         }
-        System.out.println(Memory.read((short) 100));
 
     }
 }

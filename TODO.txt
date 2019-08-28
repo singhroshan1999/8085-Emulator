@@ -1,0 +1,6 @@
+// TODO : to-do list
+1. complete all basic functions
+2. complete call functions
+3. add flag change in respective functions
+4. add shell to run
+5. add init function to initialize/reinitialize memory

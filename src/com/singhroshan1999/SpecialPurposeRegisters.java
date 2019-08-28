@@ -11,6 +11,7 @@ class SpecialPurposeRegisters {
     static short PC(){
         return SpecialPurposeRegisters._PC++;
     }
+    static short getPC(){ return _PC; }
 
     static void  IR(byte tbyte){
         SpecialPurposeRegisters._IR = tbyte;
@@ -18,6 +19,10 @@ class SpecialPurposeRegisters {
     static byte IR(){
         return SpecialPurposeRegisters._IR;
     }
+    static void SP(short tbyte){ _SP = tbyte; }
+    static short SP(){ return _SP; }
+    static void incSP(){_SP++;}
+    static void decSP(){_SP--;}
 
     static void CY(boolean b){
         SpecialPurposeRegisters._flag[0] = b;
