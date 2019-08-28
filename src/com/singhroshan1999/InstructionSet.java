@@ -10,6 +10,8 @@ class InstructionSet {
     static Map<String,Integer> _decode = new HashMap<>();
     static Map<String,Integer> _mnemonic = new HashMap<>(); // MNEM - opcode
     static Map<Integer,Integer> _op_to_inst = new HashMap<>(); // OP - INST
+    static Set<String> _nBIT_INST = new HashSet<>();
+    static Set<String> _3BIT_INST = new HashSet<>();
     private static final byte _B = 0b000,_C = 0B001,_D = 0B010,_E = 0B011,_H = 0B100,_L = 0B101,_M = 0B110, _A = 0B111;
     private static Map<Byte,Runnable> _registers = new HashMap<>();
 //    private static byte _DDD_R(byte b){
@@ -29,9 +31,9 @@ class InstructionSet {
             byte d = (byte) ((SpecialPurposeRegisters.IR() & 0B00111000) >>3);
             byte s = (byte) ((SpecialPurposeRegisters.IR() & 0B00000111));
             if(d == InstructionSet._M){
-                Memory.write(Memory.readPC(),GeneralPurposeRegisters.register(s));
+                Memory.writeHL(GeneralPurposeRegisters.register(s));
             }else if(s == InstructionSet._M){
-                GeneralPurposeRegisters.register(d,Memory.readPC());
+                GeneralPurposeRegisters.register(d,Memory.readHL());
             }else{
                 GeneralPurposeRegisters.register(d,GeneralPurposeRegisters.register(s));
             }
@@ -219,19 +221,20 @@ class InstructionSet {
         }
     });
     _insSet.put(24,()->{ // ADD ADC ADI ACI
-        byte r = (byte) (SpecialPurposeRegisters.IR() & 0b111);
-        byte c = (byte) ((SpecialPurposeRegisters.IR() &1000)>>3);
-        byte i = (byte) ((SpecialPurposeRegisters.IR() &1000000)>>6);
+        byte r = (byte) (SpecialPurposeRegisters.IR() & 0b00000111);
+        byte c = (byte) ((SpecialPurposeRegisters.IR() &0b1000)>>3);
+        byte i = (byte) ((SpecialPurposeRegisters.IR() &0b01000000)>>6);
         byte carry = 0;
         if(c == 0b1 && SpecialPurposeRegisters.CY()) carry = 0b1;
         if(i == 0b0) {
             if (r != 0b110) {
+//                System.out.println(GeneralPurposeRegisters.register(_A)+"^^^^"+GeneralPurposeRegisters.register(r));
                 GeneralPurposeRegisters.register(_A, (byte) (GeneralPurposeRegisters.register(_A) + GeneralPurposeRegisters.register(r) + carry));
             } else {
-                GeneralPurposeRegisters.register(_A, (byte) (GeneralPurposeRegisters.register(_A) + Memory.readPC() + carry));
+                GeneralPurposeRegisters.register(_A, (byte) (GeneralPurposeRegisters.register(_A) + Memory.readHL() + carry));
             }
         } else{
-            GeneralPurposeRegisters.register(_A,(byte) (GeneralPurposeRegisters.register(_A)+SpecialPurposeRegisters.PC()+carry));
+            GeneralPurposeRegisters.register(_A,(byte) (GeneralPurposeRegisters.register(_A)+Memory.readPC()+carry));
         }
     });
     // TODO : DAD (addition)
@@ -348,7 +351,7 @@ class InstructionSet {
     }
 
     static {
-        _mnemonic.put("ACI Data",0XCE);
+        _mnemonic.put("ACI",0XCE);
         _mnemonic.put("ADC A",0X8F);
         _mnemonic.put("ADC B",0X88);
         _mnemonic.put("ADC C",0X89);
@@ -365,7 +368,7 @@ class InstructionSet {
         _mnemonic.put("ADD H",0X84);
         _mnemonic.put("ADD L",0X85);
         _mnemonic.put("ADD M",0X86);
-        _mnemonic.put("ADI Data",0XC6);
+        _mnemonic.put("ADI",0XC6);
         _mnemonic.put("ANA A",0XA7);
         _mnemonic.put("ANA B",0XA0);
         _mnemonic.put("ANA C",0XA1);
@@ -374,10 +377,10 @@ class InstructionSet {
         _mnemonic.put("ANA H",0XA4);
         _mnemonic.put("ANA L",0XA5);
         _mnemonic.put("ANA M",0XA6);
-        _mnemonic.put("ANI Data",0XE6);
-        _mnemonic.put("CALL Label",0XCD);
-        _mnemonic.put("CC Label",0XDC);
-        _mnemonic.put("CM Label",0XFC);
+        _mnemonic.put("ANI",0XE6);
+        _mnemonic.put("CALL",0XCD);
+        _mnemonic.put("CC",0XDC);
+        _mnemonic.put("CM",0XFC);
         _mnemonic.put("CMA",0X2F);
         _mnemonic.put("CMC",0X3F);
         _mnemonic.put("CMP A",0XBF);
@@ -388,13 +391,13 @@ class InstructionSet {
         _mnemonic.put("CMP H",0XBC);
         _mnemonic.put("CMP L",0XBD);
         _mnemonic.put("CMP M",0XBD);
-        _mnemonic.put("CNC Label",0XD4);
-        _mnemonic.put("CNZ Label",0XC4);
-        _mnemonic.put("CP Label",0XF4);
-        _mnemonic.put("CPE Label",0XEC);
-        _mnemonic.put("CPI Data",0XFE);
-        _mnemonic.put("CPO Label",0XE4);
-        _mnemonic.put("CZ Label",0XCC);
+        _mnemonic.put("CNC",0XD4);
+        _mnemonic.put("CNZ",0XC4);
+        _mnemonic.put("CP",0XF4);
+        _mnemonic.put("CPE",0XEC);
+        _mnemonic.put("CPI",0XFE);
+        _mnemonic.put("CPO",0XE4);
+        _mnemonic.put("CZ",0XCC);
         _mnemonic.put("DAA",0X27);
         _mnemonic.put("DAD B",0X09);
         _mnemonic.put("DAD D",0X19);
@@ -415,7 +418,7 @@ class InstructionSet {
         _mnemonic.put("DI",0XF3);
         _mnemonic.put("EI",0XFB);
         _mnemonic.put("HLT",0X76);
-        _mnemonic.put("IN Port-address",0XDB);
+        _mnemonic.put("IN",0XDB);
         _mnemonic.put("INR A",0X3C);
         _mnemonic.put("INR B",0X04);
         _mnemonic.put("INR C",0X0C);
@@ -428,19 +431,19 @@ class InstructionSet {
         _mnemonic.put("INX D",0X13);
         _mnemonic.put("INX H",0X23);
         _mnemonic.put("INX SP",0X33);
-        _mnemonic.put("JC Label",0XDA);
-        _mnemonic.put("JM Label",0XFA);
-        _mnemonic.put("JMP Label",0XC3);
-        _mnemonic.put("JNC Label",0XD2);
-        _mnemonic.put("JNZ Label",0XC2);
-        _mnemonic.put("JP Label",0XF2);
-        _mnemonic.put("JPE Label",0XEA);
-        _mnemonic.put("JPO Label",0XE2);
-        _mnemonic.put("JZ Label",0XCA);
-        _mnemonic.put("LDA Address",0X3A);
+        _mnemonic.put("JC",0XDA);
+        _mnemonic.put("JM",0XFA);
+        _mnemonic.put("JMP",0XC3);
+        _mnemonic.put("JNC",0XD2);
+        _mnemonic.put("JNZ",0XC2);
+        _mnemonic.put("JP",0XF2);
+        _mnemonic.put("JPE",0XEA);
+        _mnemonic.put("JPO",0XE2);
+        _mnemonic.put("JZ",0XCA);
+        _mnemonic.put("LDA",0X3A);
         _mnemonic.put("LDAX B",0X0A);
         _mnemonic.put("LDAX D",0X1A);
-        _mnemonic.put("LHLD Address",0X2A);
+        _mnemonic.put("LHLD",0X2A);
         _mnemonic.put("LXI B",0X01);
         _mnemonic.put("LXI D",0X11);
         _mnemonic.put("LXI H",0X21);
@@ -508,14 +511,14 @@ class InstructionSet {
         _mnemonic.put("MOV M,E",0X73);
         _mnemonic.put("MOV M,H",0X74);
         _mnemonic.put("MOV M,L",0X75);
-        _mnemonic.put("MVI A,Data",0X3E);
-        _mnemonic.put("MVI B,Data",0X06);
-        _mnemonic.put("MVI C,Data",0X0E);
-        _mnemonic.put("MVI D,Data",0X16);
-        _mnemonic.put("MVI E,Data",0X1E);
-        _mnemonic.put("MVI H,Data",0X26);
-        _mnemonic.put("MVI L,Data",0X2E);
-        _mnemonic.put("MVI M,Data",0X36);
+        _mnemonic.put("MVI A",0X3E);
+        _mnemonic.put("MVI B",0X06);
+        _mnemonic.put("MVI C",0X0E);
+        _mnemonic.put("MVI D",0X16);
+        _mnemonic.put("MVI E",0X1E);
+        _mnemonic.put("MVI H",0X26);
+        _mnemonic.put("MVI L",0X2E);
+        _mnemonic.put("MVI M",0X36);
         _mnemonic.put("NOP",0X00);
         _mnemonic.put("ORA A",0XB7);
         _mnemonic.put("ORA B",0XB0);
@@ -525,8 +528,8 @@ class InstructionSet {
         _mnemonic.put("ORA H",0XB4);
         _mnemonic.put("ORA L",0XB5);
         _mnemonic.put("ORA M",0XB6);
-        _mnemonic.put("ORI Data",0XF6);
-        _mnemonic.put("OUT Port-Address",0XD3);
+        _mnemonic.put("ORI",0XF6);
+        _mnemonic.put("OUT",0XD3);
         _mnemonic.put("PCHL",0XE9);
         _mnemonic.put("POP B",0XC1);
         _mnemonic.put("POP D",0XD1);
@@ -566,11 +569,11 @@ class InstructionSet {
         _mnemonic.put("SBB H",0X9C);
         _mnemonic.put("SBB L",0X9D);
         _mnemonic.put("SBB M",0X9E);
-        _mnemonic.put("SBI Data",0XDE);
-        _mnemonic.put("SHLD Address",0X22);
+        _mnemonic.put("SBI",0XDE);
+        _mnemonic.put("SHLD",0X22);
         _mnemonic.put("SIM",0X30);
         _mnemonic.put("SPHL",0XF9);
-        _mnemonic.put("STA Address",0X32);
+        _mnemonic.put("STA",0X32);
         _mnemonic.put("STAX B",0X02);
         _mnemonic.put("STAX D",0X12);
         _mnemonic.put("STC",0X37);
@@ -582,7 +585,7 @@ class InstructionSet {
         _mnemonic.put("SUB H",0X94);
         _mnemonic.put("SUB L",0X95);
         _mnemonic.put("SUB M",0X96);
-        _mnemonic.put("SUI Data",0XD6);
+        _mnemonic.put("SUI",0XD6);
         _mnemonic.put("XCHG",0XEB);
         _mnemonic.put("XRA A",0XAF);
         _mnemonic.put("XRA B",0XA8);
@@ -592,7 +595,7 @@ class InstructionSet {
         _mnemonic.put("XRA H",0XAC);
         _mnemonic.put("XRA L",0XAD);
         _mnemonic.put("XRA M",0XAE);
-        _mnemonic.put("XRI Data",0XEE);
+        _mnemonic.put("XRI",0XEE);
         _mnemonic.put("XTHL",0XE3);
 
 
@@ -847,15 +850,56 @@ class InstructionSet {
         _op_to_inst.put(0XE3,255); // XTHL
 
     }
+
+    static {
+        _nBIT_INST.add("ACI");
+        _nBIT_INST.add("ADI");
+        _nBIT_INST.add("ANI");
+        _nBIT_INST.add("CALL");
+        _nBIT_INST.add("CC");
+        _nBIT_INST.add("CM");
+        _nBIT_INST.add("CNC");
+        _nBIT_INST.add("CNZ");
+        _nBIT_INST.add("CP");
+        _nBIT_INST.add("CPE");
+        _nBIT_INST.add("CPI");
+        _nBIT_INST.add("CPO");
+        _nBIT_INST.add("CZ");
+        _nBIT_INST.add("IN");
+        _nBIT_INST.add("JC");
+        _nBIT_INST.add("JNC");
+        _nBIT_INST.add("JM");
+        _nBIT_INST.add("JMP");
+        _nBIT_INST.add("JNZ");
+        _nBIT_INST.add("JZ");
+        _nBIT_INST.add("JPO");
+        _nBIT_INST.add("JPE");
+        _nBIT_INST.add("LDA");
+        _nBIT_INST.add("LHLD");
+        _nBIT_INST.add("LXI");
+        _nBIT_INST.add("MVI");
+        _nBIT_INST.add("ORI");
+        _nBIT_INST.add("OUT");
+        _nBIT_INST.add("SBI");
+        _nBIT_INST.add("SHLD");
+        _nBIT_INST.add("STA");
+        _nBIT_INST.add("SUI");
+        _nBIT_INST.add("XRI");
+//        _nBIT_INST.add("");
+//        _nBIT_INST.add("");
+//        _nBIT_INST.add("");
+    }
+
     static void setPC(short startptr){
         SpecialPurposeRegisters.PC(startptr);
     }
     static void executeIR(){ // 0X76
         SpecialPurposeRegisters.IR(Memory.readPC());
-        while(SpecialPurposeRegisters.IR() != 0X76){
+        while((SpecialPurposeRegisters.IR()&0xff) != 0X76){
             System.out.println("-------DEBUG--------");
-            System.out.println("-->(debug):"+SpecialPurposeRegisters.IR());
-            _insSet.get(_op_to_inst.get(new Integer(SpecialPurposeRegisters.IR()))).run();
+            int x = SpecialPurposeRegisters.IR();
+            System.out.println("-->(debug):"+(x));
+            _insSet.get(_op_to_inst.get(((int) SpecialPurposeRegisters.IR()) & 0xff)).run();
             SpecialPurposeRegisters.IR(Memory.readPC());
         }
 

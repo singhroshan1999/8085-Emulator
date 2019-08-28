@@ -13,5 +13,11 @@ public class Memory {
     static byte readPC(){
         return memory[(int)SpecialPurposeRegisters.PC()];
     }
+    static byte readHL(){
+        return memory[(int)(GeneralPurposeRegisters.register((byte) 0b100)<<8 | GeneralPurposeRegisters.register((byte) 0b101))];
+    }
+    static void writeHL(byte data){
+        Memory.write((short) (GeneralPurposeRegisters.register((byte) 0b100)<<8 | GeneralPurposeRegisters.register((byte) 0b101)),data);
+    }
 
 }
