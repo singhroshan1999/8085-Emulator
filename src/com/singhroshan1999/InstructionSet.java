@@ -33,6 +33,7 @@ class InstructionSet {
             if(d == InstructionSet._M){
                 Memory.writeHL(GeneralPurposeRegisters.register(s));
             }else if(s == InstructionSet._M){
+                System.out.println(((GeneralPurposeRegisters.register((byte) 0b100)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b101))&0xff);
                 GeneralPurposeRegisters.register(d,Memory.readHL());
             }else{
                 GeneralPurposeRegisters.register(d,GeneralPurposeRegisters.register(s));
@@ -59,34 +60,37 @@ class InstructionSet {
             } else if(r == 0b10){
                 GeneralPurposeRegisters.register(_H,Memory.readPC());
                 GeneralPurposeRegisters.register(_L,Memory.readPC());
+            } else if(r == 0b11){  // LXI SP
+                SpecialPurposeRegisters.SP((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
             }
         });
         _insSet.put(3,()->{ // STAX
             byte r = (byte) ((SpecialPurposeRegisters.IR() & 0B00110000) >>4);
             if(r == 0b00){
-                Memory.write((short) (GeneralPurposeRegisters.register(_B)<<8 | GeneralPurposeRegisters.register(_C)),GeneralPurposeRegisters.register((byte)0b111));
+                Memory.write((short) ((short) ((GeneralPurposeRegisters.register(_B)<<8)&0xffff | GeneralPurposeRegisters.register(_C)&0xff)),GeneralPurposeRegisters.register((byte)0b111));
             }else if(r == 0b01){
-                Memory.write((short) (GeneralPurposeRegisters.register(_D)<<8 | GeneralPurposeRegisters.register(_E)),GeneralPurposeRegisters.register((byte)0b111));
+                Memory.write((short) ((GeneralPurposeRegisters.register(_D)<<8)&0xffff | GeneralPurposeRegisters.register(_E)&0xff),GeneralPurposeRegisters.register((byte)0b111));
             }
 
         });
     _insSet.put(4,()->{  // LDAX
         byte r = (byte) ((SpecialPurposeRegisters.IR() & 0B00110000) >>4);
         if(r == 0b00){
-            GeneralPurposeRegisters.register((byte)0b111,Memory.read((short) (GeneralPurposeRegisters.register(_B)<<8 | GeneralPurposeRegisters.register(_C))));
+            GeneralPurposeRegisters.register((byte)0b111,Memory.read((short) ((GeneralPurposeRegisters.register(_B)<<8)&0xffff | GeneralPurposeRegisters.register(_C)&0xff)));
         }else if(r == 0b01){
-            GeneralPurposeRegisters.register((byte)0b111,Memory.read((short) (GeneralPurposeRegisters.register(_D)<<8 | GeneralPurposeRegisters.register(_E))));
+            GeneralPurposeRegisters.register((byte)0b111,Memory.read((short) ((GeneralPurposeRegisters.register(_D)<<8)&0xffff | GeneralPurposeRegisters.register(_E)&0xff)));
         }
 
     });
     _insSet.put(5,()->{ // STA
-        Memory.write(Memory.readPC(),GeneralPurposeRegisters.register((byte)0b111));
+        System.out.println("debug");
+        Memory.write((short) ((Memory.readPC()<<8)&0xffff | (Memory.readPC()&0xff)),GeneralPurposeRegisters.register((byte)0b111));
     });
     _insSet.put(6,()->{  // LDA
-        GeneralPurposeRegisters.register((byte)0b111,Memory.read(Memory.readPC()));
+        GeneralPurposeRegisters.register((byte)0b111,Memory.read((short) ((Memory.readPC()<<8)&0xffff | (Memory.readPC()&0xff))));
     });
     _insSet.put(7,()->{  //SHLD
-        short add = Memory.readPC();
+        short add = (short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff);
         Memory.write(add,GeneralPurposeRegisters.register(_H));
         Memory.write((short) (add+1),GeneralPurposeRegisters.register(_L));
     });
@@ -252,13 +256,13 @@ class InstructionSet {
             byte r = (byte) ((SpecialPurposeRegisters.IR() & 0b00110000)>>4);
             switch (r){
                 case 0b00:
-                    Memory.writeSP((short) (GeneralPurposeRegisters.register(_B)<<8 | GeneralPurposeRegisters.register(_C)));
+                    Memory.writeSP((short) ((GeneralPurposeRegisters.register(_B)<<8)&0xffff | GeneralPurposeRegisters.register(_C)&0xff));
                     break;
                 case 0b01:
-                    Memory.writeSP((short) (GeneralPurposeRegisters.register(_D)<<8 | GeneralPurposeRegisters.register(_E)));
+                    Memory.writeSP((short) ((GeneralPurposeRegisters.register(_D)<<8)&0xffff | GeneralPurposeRegisters.register(_E)&0xff));
                     break;
                 case 0b10:
-                    Memory.writeSP((short) (GeneralPurposeRegisters.register(_H)<<8 | GeneralPurposeRegisters.register(_L)));
+                    Memory.writeSP((short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff));
                     break;
                 case 0b11:
                     byte flag;
@@ -270,7 +274,7 @@ class InstructionSet {
                     flag = (byte) (flag<<1 | (SpecialPurposeRegisters.P()? 1 : 0));
                     flag = (byte) (flag<<1);
                     flag = (byte) (flag<<1 | (SpecialPurposeRegisters.CY()? 1 : 0));
-                    Memory.writeSP((short) (GeneralPurposeRegisters.register(_A)<<8 | flag));
+                    Memory.writeSP((short) ((GeneralPurposeRegisters.register(_A)<<8)&0xffff | flag&0xff));
                     break;
             }
     });
@@ -283,6 +287,7 @@ class InstructionSet {
                 GeneralPurposeRegisters.register(_C, (byte) (data & 0b0000000011111111));
                 break;
             case 0b01:
+                System.out.println(data>>8);
                 GeneralPurposeRegisters.register(_D, (byte) (data>>8));
                 GeneralPurposeRegisters.register(_E, (byte) (data & 0b0000000011111111));
                 break;
@@ -303,15 +308,16 @@ class InstructionSet {
 
     });
     _insSet.put(27,()->{ // XTHL
-        short temp = (short) (GeneralPurposeRegisters.register(_H)<<8 | GeneralPurposeRegisters.register(_L));
+        short temp = (short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
         short temp2 = Memory.readSP();
+//        System.out.println(temp);
         Memory.writeSP(temp);
-        GeneralPurposeRegisters.register(_H, (byte) (temp>>8));
-        GeneralPurposeRegisters.register(_L, (byte) (temp & 0b0000000011111111));
+        GeneralPurposeRegisters.register(_H, (byte) (temp2>>8));
+        GeneralPurposeRegisters.register(_L, (byte) (temp2 & 0b0000000011111111));
     });
     _insSet.put(28,()->{ // SPHL
-        short temp = (short) (GeneralPurposeRegisters.register(_H)<<8 | GeneralPurposeRegisters.register(_L));
-        Memory.writeSP(temp);
+        short temp = (short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
+        SpecialPurposeRegisters.SP(temp);
     });
     // ~ LXI INX DCX
     // TODO : CALL
@@ -413,8 +419,10 @@ class InstructionSet {
                         break;
                 }
             } else {
+                System.out.println("add deb");
                 switch(op){
                     case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & GeneralPurposeRegisters.register(r)));
+                        System.out.println("srrgsgbhg");
                         break;
                     case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ GeneralPurposeRegisters.register(r)));
                         break;
