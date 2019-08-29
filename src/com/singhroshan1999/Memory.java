@@ -11,7 +11,7 @@ public class Memory {
     }
     static void writeInt(int address,int data){ Memory.write((short) address,(byte) data);}
     static byte readPC(){
-        return memory[(int)SpecialPurposeRegisters.PC()];
+        return memory[(int)SpecialPurposeRegisters.PC()&0xffff];
     }
     static byte readHL(){
         return memory[(int)((GeneralPurposeRegisters.register((byte) 0b100)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b101))&0xff];
@@ -33,5 +33,6 @@ public class Memory {
         SpecialPurposeRegisters.incSP();
         return i;
     }
+    static void initMemory(){ Arrays.fill(memory, (byte) 0);}
 
 }

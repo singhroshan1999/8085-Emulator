@@ -43,7 +43,7 @@ class InstructionSet {
 //            System.out.println("88888888888");
             byte d = (byte) ((SpecialPurposeRegisters.IR() & 0B00111000) >>3);
             if(d == InstructionSet._M){
-            Memory.write((short) ((short) (GeneralPurposeRegisters.register(_H)<<8|GeneralPurposeRegisters.register(_L))&0xff),Memory.readPC());
+            Memory.write((short) ((short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff|GeneralPurposeRegisters.register(_L)&0xff)),Memory.readPC());
             } else{
                 GeneralPurposeRegisters.register(d,Memory.readPC());
             }
@@ -192,7 +192,7 @@ class InstructionSet {
             GeneralPurposeRegisters.register(r, (byte) (GeneralPurposeRegisters.register(r)-1));
         }
     });
-    _insSet.put(22,()->{ // INX
+    _insSet.put(22,()->{ // INX  TODO : INX DCX
         byte r = (byte) ((SpecialPurposeRegisters.IR() &  0B00110000) >> 4 );
         if(r == 0b00){
             short x =(short) (GeneralPurposeRegisters.BC()+1);
@@ -396,15 +396,74 @@ class InstructionSet {
         }
 
     });
-//    _insSet.put((byte)0B11000000,()->{
+    _insSet.put(32,()->{ // ANA XRA ORA CMP ANI XRI ORI CPI
+        byte r = (byte)(SpecialPurposeRegisters.IR()&0b00000111);
+        byte i = (byte) ((SpecialPurposeRegisters.IR()&0b01000000)>>6);
+        byte op = (byte) ((SpecialPurposeRegisters.IR()&0b00111000)>>3);
+        if(i == 0b0){
+            if(r == _M){
+                switch(op){
+                    case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readHL()));
+                        break;
+                    case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ Memory.readHL()));
+                        break;
+                    case 0b110: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) | Memory.readHL()));
+                        break;
+                    case 0b111: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readHL()));  // TODO : CMP
+                        break;
+                }
+            } else {
+                switch(op){
+                    case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & GeneralPurposeRegisters.register(r)));
+                        break;
+                    case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ GeneralPurposeRegisters.register(r)));
+                        break;
+                    case 0b110: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) | GeneralPurposeRegisters.register(r)));
+                        break;
+                    case 0b111: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & GeneralPurposeRegisters.register(r)));  // TODO : CMP
+                        break;
+                }
+            }
+        } else {
+            switch(op){
+                case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readPC()));
+                    break;
+                case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ Memory.readPC()));
+                    break;
+                case 0b110: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) | Memory.readPC()));
+                    break;
+                case 0b111: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readPC()));  // TODO : CMP
+                    break;
+            }
+        }
+
+    });
+    _insSet.put(33,()->{ // CMA STC CMC DAA
+        byte op = (byte) ((SpecialPurposeRegisters.IR()&0b00011000)>>3);
+        switch (op){
+            case 0b00: break;  // TODO : DAA
+            case 0b01: GeneralPurposeRegisters.register(_A, (byte) ~GeneralPurposeRegisters.register(_A));
+            break;
+            case 0b10: SpecialPurposeRegisters.CY(true);
+            break;
+            case 0b11: SpecialPurposeRegisters.CY(!SpecialPurposeRegisters.CY());
+            break;
+        }
+    });
+    _insSet.put(34,()->{ // NOP
+
+    });
+//    _insSet.put(0,()->{
 //
 //    });
-//    _insSet.put((byte)0B11000000,()->{
+//    _insSet.put(0,()->{
 //
 //    });
-//    _insSet.put((byte)0B11000000,()->{
+//    _insSet.put(0,()->{
 //
 //    });
+
+
     }
 
     static {
@@ -777,36 +836,36 @@ class InstructionSet {
         _op_to_inst.put(0X85,24); // ADD L
         _op_to_inst.put(0X86,24); // ADD M
         _op_to_inst.put(0XC6,24); // ADI Data
-        _op_to_inst.put(0XA7,255); // ANA A
-        _op_to_inst.put(0XA0,255); // ANA B
-        _op_to_inst.put(0XA1,255); // ANA C
-        _op_to_inst.put(0XA2,255); // ANA D
-        _op_to_inst.put(0XA3,255); // ANA E
-        _op_to_inst.put(0XA4,255); // ANA H
-        _op_to_inst.put(0XA5,255); // ANA L
-        _op_to_inst.put(0XA6,255); // ANA M
-        _op_to_inst.put(0XE6,255); // ANI Data
+        _op_to_inst.put(0XA7,32); // ANA A
+        _op_to_inst.put(0XA0,32); // ANA B
+        _op_to_inst.put(0XA1,32); // ANA C
+        _op_to_inst.put(0XA2,32); // ANA D
+        _op_to_inst.put(0XA3,32); // ANA E
+        _op_to_inst.put(0XA4,32); // ANA H
+        _op_to_inst.put(0XA5,32); // ANA L
+        _op_to_inst.put(0XA6,32); // ANA M
+        _op_to_inst.put(0XE6,32); // ANI Data
         _op_to_inst.put(0XCD,29); // CALL Label
         _op_to_inst.put(0XDC,29); // CC Label
         _op_to_inst.put(0XFC,29); // CM Label
-        _op_to_inst.put(0X2F,255); // CMA
-        _op_to_inst.put(0X3F,255); // CMC
-        _op_to_inst.put(0XBF,255); // CMP A
-        _op_to_inst.put(0XB8,255); // CMP B
-        _op_to_inst.put(0XB9,255); // CMP C
-        _op_to_inst.put(0XBA,255); // CMP D
-        _op_to_inst.put(0XBB,255); // CMP E
-        _op_to_inst.put(0XBC,255); // CMP H
-        _op_to_inst.put(0XBD,255); // CMP L
-        _op_to_inst.put(0XBE,255); // CMP M
+        _op_to_inst.put(0X2F,33); // CMA
+        _op_to_inst.put(0X3F,33); // CMC
+        _op_to_inst.put(0XBF,32); // CMP A
+        _op_to_inst.put(0XB8,32); // CMP B
+        _op_to_inst.put(0XB9,32); // CMP C
+        _op_to_inst.put(0XBA,32); // CMP D
+        _op_to_inst.put(0XBB,32); // CMP E
+        _op_to_inst.put(0XBC,32); // CMP H
+        _op_to_inst.put(0XBD,32); // CMP L
+        _op_to_inst.put(0XBE,32); // CMP M
         _op_to_inst.put(0XD4,29); // CNC Label
         _op_to_inst.put(0XC4,29); // CNZ Label
         _op_to_inst.put(0XF4,29); // CP Label
         _op_to_inst.put(0XEC,29); // CPE Label
-        _op_to_inst.put(0XFE,255); // CPI Data
+        _op_to_inst.put(0XFE,32); // CPI Data
         _op_to_inst.put(0XE4,29); // CPO Label
         _op_to_inst.put(0XCC,29); // CZ Label
-        _op_to_inst.put(0X27,255); // DAA
+        _op_to_inst.put(0X27,33); // DAA
         _op_to_inst.put(0X09,255); // DAD B
         _op_to_inst.put(0X19,255); // DAD D
         _op_to_inst.put(0X29,255); // DAD H
@@ -927,16 +986,16 @@ class InstructionSet {
         _op_to_inst.put(0X26,1); // MVI H,Data
         _op_to_inst.put(0X2E,1); // MVI L,Data
         _op_to_inst.put(0X36,1); // MVI M,Data
-        _op_to_inst.put(0X00,255); // NOP
-        _op_to_inst.put(0XB7,255); // ORA A
-        _op_to_inst.put(0XB0,255); // ORA B
-        _op_to_inst.put(0XB1,255); // ORA C
-        _op_to_inst.put(0XB2,255); // ORA D
-        _op_to_inst.put(0XB3,255); // ORA E
-        _op_to_inst.put(0XB4,255); // ORA H
-        _op_to_inst.put(0XB5,255); // ORA L
-        _op_to_inst.put(0XB6,255); // ORA M
-        _op_to_inst.put(0XF6,255); // ORI Data
+        _op_to_inst.put(0X00,34); // NOP
+        _op_to_inst.put(0XB7,32); // ORA A
+        _op_to_inst.put(0XB0,32); // ORA B
+        _op_to_inst.put(0XB1,32); // ORA C
+        _op_to_inst.put(0XB2,32); // ORA D
+        _op_to_inst.put(0XB3,32); // ORA E
+        _op_to_inst.put(0XB4,32); // ORA H
+        _op_to_inst.put(0XB5,32); // ORA L
+        _op_to_inst.put(0XB6,32); // ORA M
+        _op_to_inst.put(0XF6,32); // ORI Data
         _op_to_inst.put(0XD3,255); // OUT Port-Address
         _op_to_inst.put(0XE9,255); // PCHL
         _op_to_inst.put(0XC1,26); // POP B
@@ -984,7 +1043,7 @@ class InstructionSet {
         _op_to_inst.put(0X32,5); // STA Address
         _op_to_inst.put(0X02,3); // STAX B
         _op_to_inst.put(0X12,3); // STAX D
-        _op_to_inst.put(0X37,255); // STC
+        _op_to_inst.put(0X37,33); // STC
         _op_to_inst.put(0X97,31); // SUB A
         _op_to_inst.put(0X90,31); // SUB B
         _op_to_inst.put(0X91,31); // SUB C
@@ -995,15 +1054,15 @@ class InstructionSet {
         _op_to_inst.put(0X96,31); // SUB M
         _op_to_inst.put(0XD6,31); // SUI Data
         _op_to_inst.put(0XEB,9); // XCHG
-        _op_to_inst.put(0XAF,255); // XRA A
-        _op_to_inst.put(0XA8,255); // XRA B
-        _op_to_inst.put(0XA9,255); // XRA C
-        _op_to_inst.put(0XAA,255); // XRA D
-        _op_to_inst.put(0XAB,255); // XRA E
-        _op_to_inst.put(0XAC,255); // XRA H
-        _op_to_inst.put(0XAD,255); // XRA L
-        _op_to_inst.put(0XAE,255); // XRA M
-        _op_to_inst.put(0XEE,255); // XRI Data
+        _op_to_inst.put(0XAF,32); // XRA A
+        _op_to_inst.put(0XA8,32); // XRA B
+        _op_to_inst.put(0XA9,32); // XRA C
+        _op_to_inst.put(0XAA,32); // XRA D
+        _op_to_inst.put(0XAB,32); // XRA E
+        _op_to_inst.put(0XAC,32); // XRA H
+        _op_to_inst.put(0XAD,32); // XRA L
+        _op_to_inst.put(0XAE,32); // XRA M
+        _op_to_inst.put(0XEE,32); // XRI Data
         _op_to_inst.put(0XE3,27); // XTHL
 
     }

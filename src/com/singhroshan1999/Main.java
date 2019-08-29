@@ -31,18 +31,10 @@ public class Main {
 //            System.out.print("::");
             str = s.readLine();
             if(str.equals("q")) break;
-            if(str.toUpperCase().equals("%EXECUTE")){
-                InstructionSet.executeIR();
-                System.out.println((GeneralPurposeRegisters.register((byte) 0b000)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b001)&0xff);
-                System.out.println(GeneralPurposeRegisters.register((byte) 0b001));
+            if(str.startsWith("%")) {
+                Internals.parseInternals(str.toUpperCase());
                 continue;
-            }else if(str.startsWith("%SETMEMORY")){
-                String[] arr = str.split(" ");
-                MnemonicParser.setStart(Short.parseShort(arr[1]));
-                stptr = Short.parseShort(arr[1]);
-                InstructionSet.setPC(stptr);
             }
-
             MnemonicParser.compile(str);
 //            System.out.print("::");
 //            str = s.nextLine();
