@@ -1,7 +1,9 @@
 // TODO : to-do list
-1. complete all basic functions
-2. complete call functions
-3. add flag change in respective functions
-4. add shell to run
-5. add init function to initialize/reinitialize memory
+1. complete all basic functions (only restart i/o rotate special control new_instructions left)
+2. complete call functions (done)
+3. add flag change in respective functions (done)
+4. add shell to run (idea dropped)
+5. add init function to initialize/reinitialize memory (done)
 6. 2's complement representation of number
+7. extensive testing
+8. more robust preprocessor and mnemonic compiler

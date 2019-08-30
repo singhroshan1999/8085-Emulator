@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
@@ -23,7 +24,16 @@ public class Main {
 //        System.out.println(Memory.read((short) 100));
 //        Scanner s = new Scanner(System.in);
 //        FileReader f = ;
-        BufferedReader s = new BufferedReader(new FileReader("in.asm"));
+        String file;
+//        System.out.println(Arrays.toString(args));
+        if(args.length >= 1){
+            file = args[0];
+        }else{
+            System.out.println("Enter file name to execute:");
+            Scanner scan = new Scanner(System.in);
+            file = scan.next();
+        }
+        BufferedReader s = new BufferedReader(new FileReader(file));
         short stptr = 0;
         String str;
         InstructionSet.setPC(stptr);
@@ -34,12 +44,14 @@ public class Main {
             if(str.endsWith(":")){
                 MnemonicParser.setLabel(str);
                 continue;
+            } else if(str.startsWith("%") || str.startsWith("//")){
+                continue;
             }
             MnemonicParser.preprocess(str);
         }
         s.close();
         MnemonicParser.setStart(stptr);
-        s = new BufferedReader(new FileReader("in.asm"));
+        s = new BufferedReader(new FileReader(file));
         str = "";
         while(true){
 //            System.out.print("::");
@@ -50,6 +62,8 @@ public class Main {
                 continue;
             } else if(str.endsWith(":")){
                 MnemonicParser.setLabel(str);
+                continue;
+            } else if(str.startsWith("//")){
                 continue;
             }
             MnemonicParser.compile(str);
