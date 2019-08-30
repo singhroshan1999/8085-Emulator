@@ -4,3 +4,4 @@
 3. add flag change in respective functions
 4. add shell to run
 5. add init function to initialize/reinitialize memory
+6. 2's complement representation of number

@@ -22,17 +22,34 @@ public class Main {
 //        }
 //        System.out.println(Memory.read((short) 100));
 //        Scanner s = new Scanner(System.in);
-        FileReader f = new FileReader("in.asm");
-        BufferedReader s = new BufferedReader(f);
+//        FileReader f = ;
+        BufferedReader s = new BufferedReader(new FileReader("in.asm"));
         short stptr = 0;
-        String str = new String();
+        String str;
         InstructionSet.setPC(stptr);
-        while(!str.equals("q")){
+        // preprocess
+        while(true){
+            str = s.readLine();
+            if(str.equals("q")) break;
+            if(str.endsWith(":")){
+                MnemonicParser.setLabel(str);
+                continue;
+            }
+            MnemonicParser.preprocess(str);
+        }
+        s.close();
+        MnemonicParser.setStart(stptr);
+        s = new BufferedReader(new FileReader("in.asm"));
+        str = "";
+        while(true){
 //            System.out.print("::");
             str = s.readLine();
             if(str.equals("q")) break;
             if(str.startsWith("%")) {
                 Internals.parseInternals(str.toUpperCase());
+                continue;
+            } else if(str.endsWith(":")){
+                MnemonicParser.setLabel(str);
                 continue;
             }
             MnemonicParser.compile(str);

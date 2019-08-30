@@ -24,7 +24,25 @@ class InstructionSet {
 //        _registers.put(_B,GeneralPurposeRegisters.);
 //
 //}
-    static {
+    static boolean getParity(byte n)
+    {
+        boolean parity = false;
+        while(n != 0)
+        {
+            parity = !parity;
+            n = (byte) (n & (n-1));
+        }
+        return parity;
+
+    }
+    static void checkFlag(byte r){
+        SpecialPurposeRegisters.S(r>>7 == 0b1);
+        SpecialPurposeRegisters.Z(r == 0);
+        SpecialPurposeRegisters.P(getParity(r));
+        SpecialPurposeRegisters.CY(false);
+
+    }
+        static {
 
         /* 1 byte instructions */
         _insSet.put(0,()->{ // MOV
@@ -33,7 +51,7 @@ class InstructionSet {
             if(d == InstructionSet._M){
                 Memory.writeHL(GeneralPurposeRegisters.register(s));
             }else if(s == InstructionSet._M){
-                System.out.println(((GeneralPurposeRegisters.register((byte) 0b100)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b101))&0xff);
+//                System.out.println(((GeneralPurposeRegisters.register((byte) 0b100)<<8)&0xffff | GeneralPurposeRegisters.register((byte) 0b101))&0xff);
                 GeneralPurposeRegisters.register(d,Memory.readHL());
             }else{
                 GeneralPurposeRegisters.register(d,GeneralPurposeRegisters.register(s));
@@ -83,7 +101,7 @@ class InstructionSet {
 
     });
     _insSet.put(5,()->{ // STA
-        System.out.println("debug");
+//        System.out.println("debug");
         Memory.write((short) ((Memory.readPC()<<8)&0xffff | (Memory.readPC()&0xff)),GeneralPurposeRegisters.register((byte)0b111));
     });
     _insSet.put(6,()->{  // LDA
@@ -110,66 +128,66 @@ class InstructionSet {
     });
 
     _insSet.put(10,()->{ //JMP
-        SpecialPurposeRegisters.PC(Memory.readPC());
+        SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
     });
     _insSet.put(11,()->{ // JC
         if(SpecialPurposeRegisters.CY()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(12,()->{ // JNC
         if(!SpecialPurposeRegisters.CY()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(13,()->{ // JZ
         if(SpecialPurposeRegisters.Z()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(14,()->{ // JNZ
         if(!SpecialPurposeRegisters.Z()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(15,()->{ // JP
         if(SpecialPurposeRegisters.S()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(16,()->{ //JM
         if(!SpecialPurposeRegisters.S()){
             SpecialPurposeRegisters.PC(Memory.readPC());
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(17,()->{ // JPE
         if(SpecialPurposeRegisters.P()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(18,()->{ // JPO
         if(!SpecialPurposeRegisters.P()){
-            SpecialPurposeRegisters.PC(Memory.readPC());
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
         }else{
-            Memory.readPC();
+            Memory.readPC();Memory.readPC();
         }
     });
     _insSet.put(19,()->{ // PCHL
-            SpecialPurposeRegisters.PC((short)(GeneralPurposeRegisters.register(_H)<<8|GeneralPurposeRegisters.register(_L)));
+            SpecialPurposeRegisters.PC((short)((GeneralPurposeRegisters.register(_H)<<8)&0xffff|GeneralPurposeRegisters.register(_L)&0xff));
     });
 
     // TODO : RST IN/OUT
@@ -177,56 +195,103 @@ class InstructionSet {
 
     _insSet.put(20,()->{ // INR
         byte r = (byte) ((SpecialPurposeRegisters.IR() & 0B00111000) >>3);
+        byte add;
         if(r == 0b110){
-            short add = Memory.readPC();
-            //88888888888888
-            Memory.write(add, (byte) (Memory.read(add)+1));
+            add = Memory.readHL();
+            Memory.writeHL((byte) (Memory.readHL()+1));
         }else{
+            add = GeneralPurposeRegisters.register(r);
             int sum = (GeneralPurposeRegisters.register(r)+1);
-            SpecialPurposeRegisters.CY(sum>>8 > 0b0);
             GeneralPurposeRegisters.register(r, (byte) sum);
+        }
+        // FLAG
+        if((add&0xff) == 255){
+            SpecialPurposeRegisters.CY(true);
+        }else{
+            SpecialPurposeRegisters.CY(false);
+        }
+        if(add+1 == 0){
+            SpecialPurposeRegisters.Z(true);
+        }else {
+            SpecialPurposeRegisters.Z(false);
+        }
+        if(getParity((byte) (add+1))){
+            SpecialPurposeRegisters.P(false);
+        } else {
+            SpecialPurposeRegisters.P(true);
         }
     });
     _insSet.put(21,()->{ // DCR
         byte r = (byte) ((SpecialPurposeRegisters.IR() & 0B00111000) >>3);
+        byte add;
         if(r == 0b110){
-            short add = Memory.readPC();
-            Memory.write(add, (byte) (Memory.read(add)-1));
+            add = Memory.readHL();
+            Memory.writeHL((byte) (Memory.readHL()-1));
         }else{
+            add = GeneralPurposeRegisters.register(r);
             GeneralPurposeRegisters.register(r, (byte) (GeneralPurposeRegisters.register(r)-1));
+        }
+        // FLAG
+        if(add == 0x0){
+            SpecialPurposeRegisters.CY(true);
+            SpecialPurposeRegisters.S(true);
+        }else{
+            SpecialPurposeRegisters.CY(false);
+            SpecialPurposeRegisters.S(false);
+        }
+        if(add-1 == 0){
+            SpecialPurposeRegisters.Z(true);
+        }else {
+            SpecialPurposeRegisters.Z(false);
+        }
+        if(getParity((byte) (add-1))){
+            SpecialPurposeRegisters.P(false);
+        } else {
+            SpecialPurposeRegisters.P(true);
         }
     });
     _insSet.put(22,()->{ // INX  TODO : INX DCX
         byte r = (byte) ((SpecialPurposeRegisters.IR() &  0B00110000) >> 4 );
         if(r == 0b00){
-            short x =(short) (GeneralPurposeRegisters.BC()+1);
-            GeneralPurposeRegisters.BC((byte) (x>>8),(byte) (x&0b0000000011111111));
+            short x = (short) (((GeneralPurposeRegisters.register(_B)<<8)&0xffff | GeneralPurposeRegisters.register(_C)&0xff) +1);
+            GeneralPurposeRegisters.register(_B, (byte) (x>>8));
+            GeneralPurposeRegisters.register(_C, (byte) (x&0b0000000011111111));
         } else if(r == 0b01){
-            short x =(short) (GeneralPurposeRegisters.DE()+1);
-            GeneralPurposeRegisters.DE((byte) (x>>8),(byte) (x&0b0000000011111111));
+            short x = (short) (((GeneralPurposeRegisters.register(_D)<<8)&0xffff | GeneralPurposeRegisters.register(_E)&0xff) +1);
+            GeneralPurposeRegisters.register(_D, (byte) (x>>8));
+            GeneralPurposeRegisters.register(_E, (byte) (x&0b0000000011111111));
         }else if(r == 0b10){
-            short x =(short) (GeneralPurposeRegisters.HL()+1);
-            GeneralPurposeRegisters.HL((byte) (x>>8),(byte) (x&0b0000000011111111));
+            short x = (short) (((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff) +1);
+            GeneralPurposeRegisters.register(_H, (byte) (x>>8));
+            GeneralPurposeRegisters.register(_L, (byte) (x&0b0000000011111111));
+        } else if(r == 0b11){ // SP
+            SpecialPurposeRegisters.incSP();
         }
 
     });
     _insSet.put(23,()->{ // DCX
         byte r = (byte) ((SpecialPurposeRegisters.IR() &  0B00110000) >> 4 );
         if(r == 0b00){
-            short x =(short) (GeneralPurposeRegisters.BC()-1);
-            GeneralPurposeRegisters.BC((byte) (x>>8),(byte) (x&0b0000000011111111));
+            short x = (short) (((GeneralPurposeRegisters.register(_B)<<8)&0xffff | GeneralPurposeRegisters.register(_C)&0xff) -1);
+            GeneralPurposeRegisters.register(_B, (byte) (x>>8));
+            GeneralPurposeRegisters.register(_C, (byte) (x&0b0000000011111111));
         } else if(r == 0b01){
-            short x =(short) (GeneralPurposeRegisters.DE()-1);
-            GeneralPurposeRegisters.DE((byte) (x>>8),(byte) (x&0b0000000011111111));
+            short x = (short) (((GeneralPurposeRegisters.register(_D)<<8)&0xffff | GeneralPurposeRegisters.register(_E)&0xff) -1);
+            GeneralPurposeRegisters.register(_D, (byte) (x>>8));
+            GeneralPurposeRegisters.register(_E, (byte) (x&0b0000000011111111));
         }else if(r == 0b10){
-            short x =(short) (GeneralPurposeRegisters.HL()-1);
-            GeneralPurposeRegisters.HL((byte) (x>>8),(byte) (x&0b0000000011111111));
+            short x = (short) (((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff) -1);
+            GeneralPurposeRegisters.register(_H, (byte) (x>>8));
+            GeneralPurposeRegisters.register(_L, (byte) (x&0b0000000011111111));
+        } else if(r == 0b11){ // SP
+            SpecialPurposeRegisters.decSP();
         }
     });
     _insSet.put(24,()->{ // ADD ADC ADI ACI
         byte r = (byte) (SpecialPurposeRegisters.IR() & 0b00000111);
         byte c = (byte) ((SpecialPurposeRegisters.IR() &0b1000)>>3);
         byte i = (byte) ((SpecialPurposeRegisters.IR() &0b01000000)>>6);
+        byte acc = GeneralPurposeRegisters.register(_A);
         byte carry = 0;
         if(c == 0b1 && SpecialPurposeRegisters.CY()) carry = 0b1;
         if(i == 0b0) {
@@ -238,6 +303,22 @@ class InstructionSet {
             }
         } else{
             GeneralPurposeRegisters.register(_A,(byte) (GeneralPurposeRegisters.register(_A)+Memory.readPC()+carry));
+        }
+        // FLAG
+        if((GeneralPurposeRegisters.register(_A)&0xff) < (acc&0xff)){
+            SpecialPurposeRegisters.CY(true);
+        }else{
+            SpecialPurposeRegisters.CY(false);
+        }
+        if(GeneralPurposeRegisters.register(_A) == 0){
+            SpecialPurposeRegisters.Z(true);
+        }else {
+            SpecialPurposeRegisters.Z(false);
+        }
+        if(getParity(GeneralPurposeRegisters.register(_A))){
+            SpecialPurposeRegisters.P(false);
+        } else {
+            SpecialPurposeRegisters.P(true);
         }
     });
     // TODO : DAD (addition)
@@ -287,7 +368,7 @@ class InstructionSet {
                 GeneralPurposeRegisters.register(_C, (byte) (data & 0b0000000011111111));
                 break;
             case 0b01:
-                System.out.println(data>>8);
+//                System.out.println(data>>8);
                 GeneralPurposeRegisters.register(_D, (byte) (data>>8));
                 GeneralPurposeRegisters.register(_E, (byte) (data & 0b0000000011111111));
                 break;
@@ -325,35 +406,39 @@ class InstructionSet {
     _insSet.put(29,()->{ // CALL CC CNC CZ CNZ CP CM CPE CPO
         byte r = (byte) ((SpecialPurposeRegisters.IR()&0b00111000)>>3);
         byte c = (byte) (SpecialPurposeRegisters.IR()&0b00000001);
-        short temp = SpecialPurposeRegisters.getPC();
+        short temp = (short) (SpecialPurposeRegisters.getPC()+2);
+//        System.out.println("temp:"+temp);
         if(c == 0b0){
             if(r == 0b011 && SpecialPurposeRegisters.CY()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             } else if(r == 0b010 && !SpecialPurposeRegisters.CY()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             }  else if(r == 0b001 && SpecialPurposeRegisters.Z()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             } else if(r == 0b000 && !SpecialPurposeRegisters.Z()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             } else if(r == 0b110 && SpecialPurposeRegisters.S()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             } else if(r == 0b111 && !SpecialPurposeRegisters.S()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             } else if(r == 0b101 && SpecialPurposeRegisters.P()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
             } else if(r == 0b100 && !SpecialPurposeRegisters.P()){
-                SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+                SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
                 Memory.writeSP(temp);
+            } else{
+                Memory.readPC();Memory.readPC();
             }
         } else{
-            SpecialPurposeRegisters.PC((short) (Memory.readPC()<<8 | Memory.readPC()));
+            SpecialPurposeRegisters.PC((short) ((Memory.readPC()<<8)&0xffff | Memory.readPC()&0xff));
+//            System.out.println("ins:"+temp);
             Memory.writeSP(temp);
         }
     });
@@ -388,17 +473,43 @@ class InstructionSet {
         byte r = (byte) (SpecialPurposeRegisters.IR() & 0b00000111);
         byte c = (byte) ((SpecialPurposeRegisters.IR() &0b1000)>>3);
         byte i = (byte) ((SpecialPurposeRegisters.IR() &0b01000000)>>6);
+        byte acc = GeneralPurposeRegisters.register(_A);
+        byte a2;
         byte carry = 0;
         if(c == 0b1 && SpecialPurposeRegisters.CY()) carry = 0b1;
         if(i == 0b0) {
             if (r != 0b110) {
 //                System.out.println(GeneralPurposeRegisters.register(_A)+"^^^^"+GeneralPurposeRegisters.register(r));
                 GeneralPurposeRegisters.register(_A, (byte) (GeneralPurposeRegisters.register(_A) - GeneralPurposeRegisters.register(r) - carry));
+                a2 = (byte) (GeneralPurposeRegisters.register(r) + carry);
             } else {
-                GeneralPurposeRegisters.register(_A, (byte) (GeneralPurposeRegisters.register(_A) - Memory.readHL() - carry));
+                a2 = (byte) (Memory.readHL() + carry);
+                GeneralPurposeRegisters.register(_A, (byte) (GeneralPurposeRegisters.register(_A) - a2));
+
             }
         } else{
-            GeneralPurposeRegisters.register(_A,(byte) (GeneralPurposeRegisters.register(_A)-Memory.readPC()-carry));
+            a2 = (byte) (Memory.readPC()+carry);
+            GeneralPurposeRegisters.register(_A,(byte) (GeneralPurposeRegisters.register(_A)-a2));
+
+        }
+        // FLAG
+//        System.out.println((acc&0xff)+" "+a2);
+        if((acc&0xff) < (a2&0xff)){
+            SpecialPurposeRegisters.CY(true);
+            SpecialPurposeRegisters.S(true);
+        }else{
+            SpecialPurposeRegisters.CY(false);
+            SpecialPurposeRegisters.S(false);
+        }
+        if(GeneralPurposeRegisters.register(_A) == 0){
+            SpecialPurposeRegisters.Z(true);
+        }else {
+            SpecialPurposeRegisters.Z(false);
+        }
+        if(getParity(GeneralPurposeRegisters.register(_A))){
+            SpecialPurposeRegisters.P(false);
+        } else {
+            SpecialPurposeRegisters.P(true);
         }
 
     });
@@ -407,40 +518,85 @@ class InstructionSet {
         byte i = (byte) ((SpecialPurposeRegisters.IR()&0b01000000)>>6);
         byte op = (byte) ((SpecialPurposeRegisters.IR()&0b00111000)>>3);
         if(i == 0b0){
+//            System.out.println("sssss"+_M+" "+r);
             if(r == _M){
+//                System.out.println("hhhhhh");
                 switch(op){
                     case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readHL()));
+                    checkFlag(GeneralPurposeRegisters.register(_A));
                         break;
                     case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ Memory.readHL()));
+                        checkFlag(GeneralPurposeRegisters.register(_A));
                         break;
                     case 0b110: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) | Memory.readHL()));
+                        checkFlag(GeneralPurposeRegisters.register(_A));
                         break;
-                    case 0b111: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readHL()));  // TODO : CMP
+                    case 0b111:  // TODO : CMP
+                        byte hl = Memory.readHL();
+                        if((GeneralPurposeRegisters.register(_A)&0xff) > (hl&0xff)){
+                            SpecialPurposeRegisters.CY(false);
+                            SpecialPurposeRegisters.Z(false);
+                        } else if((GeneralPurposeRegisters.register(_A)&0xff) < (hl&0xff)){
+//                            System.out.println(GeneralPurposeRegisters.register(_A)+" "+hl);
+                            SpecialPurposeRegisters.CY(true);
+                            SpecialPurposeRegisters.Z(false);
+                        }else{
+//                            System.out.println(GeneralPurposeRegisters.register(_A)+" "+hl);
+                            SpecialPurposeRegisters.CY(false);
+                            SpecialPurposeRegisters.Z(true);
+                        }
                         break;
                 }
             } else {
-                System.out.println("add deb");
                 switch(op){
                     case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & GeneralPurposeRegisters.register(r)));
-                        System.out.println("srrgsgbhg");
+                        checkFlag(GeneralPurposeRegisters.register(_A));
                         break;
                     case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ GeneralPurposeRegisters.register(r)));
+                        checkFlag(GeneralPurposeRegisters.register(_A));
                         break;
                     case 0b110: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) | GeneralPurposeRegisters.register(r)));
+                        checkFlag(GeneralPurposeRegisters.register(_A));
                         break;
-                    case 0b111: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & GeneralPurposeRegisters.register(r)));  // TODO : CMP
+                    case 0b111:  // TODO : CMP
+                        byte hl = GeneralPurposeRegisters.register(r);
+//                        System.out.println("dgdfg"+GeneralPurposeRegisters.register(_A));
+                        if((GeneralPurposeRegisters.register(_A)&0xff) > (hl&0xff)){
+                            SpecialPurposeRegisters.CY(false);
+                            SpecialPurposeRegisters.Z(false);
+                        } else if((GeneralPurposeRegisters.register(_A)&0xff) < (hl&0xff)){
+                            SpecialPurposeRegisters.CY(true);
+                            SpecialPurposeRegisters.Z(false);
+                        }else{
+                            SpecialPurposeRegisters.CY(false);
+                            SpecialPurposeRegisters.Z(true);
+                        }
                         break;
                 }
             }
         } else {
             switch(op){
                 case 0b100: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readPC()));
+                    checkFlag(GeneralPurposeRegisters.register(_A));
                     break;
                 case 0b101: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) ^ Memory.readPC()));
+                    checkFlag(GeneralPurposeRegisters.register(_A));
                     break;
                 case 0b110: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) | Memory.readPC()));
+                    checkFlag(GeneralPurposeRegisters.register(_A));
                     break;
-                case 0b111: GeneralPurposeRegisters.register(_A,(byte)(GeneralPurposeRegisters.register(_A) & Memory.readPC()));  // TODO : CMP
+                case 0b111:  // TODO : CMP
+                    byte hl = Memory.readPC();
+                    if((GeneralPurposeRegisters.register(_A)&0xff) > (hl&0xff)){
+                        SpecialPurposeRegisters.CY(false);
+                        SpecialPurposeRegisters.Z(false);
+                    } else if((GeneralPurposeRegisters.register(_A)&0xff) < (hl&0xff)){
+                        SpecialPurposeRegisters.CY(true);
+                        SpecialPurposeRegisters.Z(false);
+                    }else{
+                        SpecialPurposeRegisters.CY(false);
+                        SpecialPurposeRegisters.Z(true);
+                    }
                     break;
             }
         }
@@ -461,9 +617,37 @@ class InstructionSet {
     _insSet.put(34,()->{ // NOP
 
     });
-//    _insSet.put(0,()->{
-//
-//    });
+
+    _insSet.put(35,()->{  // DAD
+        byte r = (byte) ((SpecialPurposeRegisters.IR()&0b00111000)>>3);
+        short x;
+        switch (r){
+            case 0b001:
+                x = (short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
+                x+= (short) ((GeneralPurposeRegisters.register(_B)<<8)&0xffff | GeneralPurposeRegisters.register(_C)&0xff);
+                GeneralPurposeRegisters.register(_H, (byte) (x>>8));
+                GeneralPurposeRegisters.register(_L, (byte) (x&0b0000000011111111));
+                break;
+            case 0b011:
+                x = (short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
+                x+= (short) ((GeneralPurposeRegisters.register(_D)<<8)&0xffff | GeneralPurposeRegisters.register(_E)&0xff);
+                GeneralPurposeRegisters.register(_H, (byte) (x>>8));
+                GeneralPurposeRegisters.register(_L, (byte) (x&0b0000000011111111));
+                break;
+            case 0b101:
+                x = (short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
+                x+= (short) ((GeneralPurposeRegisters.register(_L)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
+                GeneralPurposeRegisters.register(_H, (byte) (x>>8));
+                GeneralPurposeRegisters.register(_L, (byte) (x&0b0000000011111111));
+                break;
+            case 0b111:
+                x = (short) ((GeneralPurposeRegisters.register(_H)<<8)&0xffff | GeneralPurposeRegisters.register(_L)&0xff);
+                x+= SpecialPurposeRegisters.SP();
+                GeneralPurposeRegisters.register(_H, (byte) (x>>8));
+                GeneralPurposeRegisters.register(_L, (byte) (x&0b0000000011111111));
+                break;
+        }
+    });
 //    _insSet.put(0,()->{
 //
 //    });
@@ -614,7 +798,7 @@ class InstructionSet {
         _mnemonic.put("CMP E",0XBB);
         _mnemonic.put("CMP H",0XBC);
         _mnemonic.put("CMP L",0XBD);
-        _mnemonic.put("CMP M",0XBD);
+        _mnemonic.put("CMP M",0XBE);
         _mnemonic.put("CNC",0XD4);
         _mnemonic.put("CNZ",0XC4);
         _mnemonic.put("CP",0XF4);
@@ -874,10 +1058,10 @@ class InstructionSet {
         _op_to_inst.put(0XE4,29); // CPO Label
         _op_to_inst.put(0XCC,29); // CZ Label
         _op_to_inst.put(0X27,33); // DAA
-        _op_to_inst.put(0X09,255); // DAD B
-        _op_to_inst.put(0X19,255); // DAD D
-        _op_to_inst.put(0X29,255); // DAD H
-        _op_to_inst.put(0X39,255); // DAD SP
+        _op_to_inst.put(0X09,35); // DAD B
+        _op_to_inst.put(0X19,35); // DAD D
+        _op_to_inst.put(0X29,35); // DAD H
+        _op_to_inst.put(0X39,35); // DAD SP
         _op_to_inst.put(0X3D,21); // DCR A
         _op_to_inst.put(0X05,21); // DCR B
         _op_to_inst.put(0X0D,21); // DCR C
@@ -1118,6 +1302,7 @@ class InstructionSet {
     static void executeIR(){ // 0X76
         SpecialPurposeRegisters.IR(Memory.readPC());
         while((SpecialPurposeRegisters.IR()&0xff) != 0X76){
+//            System.out.println(SpecialPurposeRegisters.IR()&0xff);
             _insSet.get(_op_to_inst.get(((int) SpecialPurposeRegisters.IR()) & 0xff)).run();
             SpecialPurposeRegisters.IR(Memory.readPC());
         }

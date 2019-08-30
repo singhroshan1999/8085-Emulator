@@ -4,10 +4,11 @@ public class Memory {
     private static final int size = 65536;
     private static byte[] memory = new byte[size];
     static byte read(short address){
-        return memory[(int)address];
+        return memory[(int)address&0xffff];
     }
     static void write(short address,byte data){
-        memory[(int)address] = data;
+//        System.out.println("addr:"+address);
+        memory[(int)address&0xffff] = data;
     }
     static void writeInt(int address,int data){ Memory.write((short) address,(byte) data);}
     static byte readPC(){
@@ -22,7 +23,8 @@ public class Memory {
     static void writeSP(short data){
         SpecialPurposeRegisters.decSP();
 //        System.out.println(SpecialPurposeRegisters.SP());
-        Memory.write(SpecialPurposeRegisters.SP(),(byte) (data & 0b0000000011111111));
+//        System.out.println("SP:"+(SpecialPurposeRegisters.SP()));
+        Memory.write((short) (SpecialPurposeRegisters.SP()),(byte) (data & 0b0000000011111111));
         SpecialPurposeRegisters.decSP();
 //        System.out.println(SpecialPurposeRegisters.SP());
         Memory.write(SpecialPurposeRegisters.SP(),(byte) (data >> 8));
@@ -35,7 +37,7 @@ public class Memory {
 //        System.out.println(SpecialPurposeRegisters.SP());
         i = (short) (i | Memory.read(SpecialPurposeRegisters.SP())&0xff);
         SpecialPurposeRegisters.incSP();
-        System.out.println(i);
+//        System.out.println(i);
         return i;
     }
     static void initMemory(){ Arrays.fill(memory, (byte) 0);}
