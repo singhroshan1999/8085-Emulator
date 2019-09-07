@@ -39,7 +39,8 @@ public class Main {
         InstructionSet.setPC(stptr);
         // preprocess
         while(true){
-            str = s.readLine();
+            str = MnemonicParser.formatMnemonic(s.readLine());
+            if(str.isBlank()) continue;
             if(str.equals("q")) break;
             if(str.endsWith(":")){
                 MnemonicParser.setLabel(str);
@@ -55,7 +56,8 @@ public class Main {
         str = "";
         while(true){
 //            System.out.print("::");
-            str = s.readLine();
+            str = MnemonicParser.formatMnemonic(s.readLine());
+            if(str.isBlank()) continue;
             if(str.equals("q")) break;
             if(str.startsWith("%")) {
                 Internals.parseInternals(str.toUpperCase());

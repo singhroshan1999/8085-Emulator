@@ -94,4 +94,22 @@ public class MnemonicParser {
     public static void setLabel(String str) {
         _label.putIfAbsent(str.substring(0,str.length()-1).toUpperCase(), _nextInstr);
     }
+
+    static String formatMnemonic(String mnemonic){
+        // remove inline comment
+        int indx = mnemonic.indexOf("#");
+        if(indx>=0) mnemonic = mnemonic.substring(0,indx);
+        // remove white space
+        mnemonic = mnemonic.trim();
+        // remove double space
+        mnemonic = mnemonic.replaceAll("\\s+"," ");
+        mnemonic = mnemonic.replaceAll(" ,",",");
+        // remove ,space
+        mnemonic = mnemonic.replaceAll(", ",",");
+        mnemonic = mnemonic.replaceAll(" :",":");
+        mnemonic = mnemonic.replaceAll("% ","%");
+//        System.out.println("-"+mnemonic+"-");
+        return mnemonic;
+
+    }
 }

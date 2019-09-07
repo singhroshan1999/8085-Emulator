@@ -1,42 +1,21 @@
-// this is 8085 assembly program to sort numbers
-LXI H,3000
-MVI M,6
-LXI H,3001
-MVI M,1
-LXI H,3002
-MVI M,5
-LXI H,3003
-MVI M,2
-LXI H,3004
-MVI M,4
-LXI H,3005
-MVI M,3
-hlt
-// this is comment
-%execute
-%getmemory 3000 3010
-MVI B,5
-START:
-LXI H,3000
-MVI C,5
-BACK:
-MOV A,M
-INX H
-CMP M
-JC SKIP
-JZ SKIP
-MOV D,M
-MOV M,A
-DCX H
-MOV M,D
-INX H
-SKIP:
-DCR C
-JNZ BACK
-DCR B
-JNZ START
+    lxi h,2050
+  mvi m,4
+ MVI D,1
+        MVI E,1
+LDA  2050
+lab2  :
+SUB    D
+JZ      lab1
+INR D
+INR D
+INR E
+ # dfg dsfgs dfgsbdfgsdfcg
+JMP lab2
+lab1 :
+MOV A  ,  E
+STA 2051
 HLT
-%execute
-%getregister
-%getmemory 3000 3010
+     %execute # dfgsdgsdgsdfgsdf
+%    getregister
+%getmemory          2050          2051
 q
